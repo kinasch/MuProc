@@ -366,8 +366,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 772e31e4851684a4d84b1b34f33798f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gain: 0.01
-  bpm: 88
+  musicSeed: 420
+  gain: 0.02
+  bpm: 100
+  amountOfInnerSeeds: 4
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -546,19 +548,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 959306982}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 959306984}
-        m_TargetAssemblyTypeName: RandomTest, Assembly-CSharp
-        m_MethodName: LogRandomNumber
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &959306982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1139,8 +1129,8 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 959306984}
-        m_TargetAssemblyTypeName: Stop, Assembly-CSharp
+      - m_Target: {fileID: 642864335}
+        m_TargetAssemblyTypeName: Oscillator, Assembly-CSharp
         m_MethodName: SetSeed
         m_Mode: 0
         m_Arguments:
