@@ -15,7 +15,9 @@ const privateData = require("./private.json");
     const locator = await page.locator('a[href$=".mid"]');
     
     let fileName, download;
-    for (let i = 0; i < 50; i++) {
+    let len = await locator.all();
+    // NOTE: Please limit the amount of downloads, bandwidth is expensive
+    for (let i = 0; i < len.length; i++) {
         fileName = await locator.nth(i).getAttribute("href");
         [ download ] = await Promise.all([
             page.waitForEvent('download'),
@@ -23,6 +25,7 @@ const privateData = require("./private.json");
         ]);
         await download.saveAs(privateData.path+fileName);
         await download.path();
+        await page.waitForTimeout(20);
     }
 
     await browser.close();
