@@ -1,0 +1,16 @@
+{
+  "name": "data_acquisition",
+  "version": "1.0.0",
+  "description": "",
+  "main": "scraper.js",
+  "scripts": {
+    "scrape": "node .\\scraper.js",
+    "analyse": "node .\\midi_analysis.js"
+  },
+  "author": "kinasch",
+  "license": "ISC",
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "playwright": "^1.30.0"
+  }
+}
