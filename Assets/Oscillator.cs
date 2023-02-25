@@ -10,7 +10,7 @@ using Random = UnityEngine.Random;
 public class Oscillator : MonoBehaviour
 {
     private double increment;
-    private double phase;
+    private double phase,bassPhase;
     private const double samplingFrequency = 48000.0;
 
     [SerializeField] private int musicSeed = 420;
@@ -59,9 +59,20 @@ public class Oscillator : MonoBehaviour
         new( "F", 349.23),
         new( "A#", 466.16)
     };
+    
+    private readonly List<Note> bass = new List<Note>()
+    {
+        new("C2", 65.41),
+        new( "E2", 82.41),
+        new( "G2", 98.00)
+    };
+    private int bassDirection = 1;
+    private int currBaseIndex = 0;
+    private Note bassNote;
 
     private int repetitionCounter = 0;
     private int currentSeedNumber = 0;
+    private int sameNoteAmount = 0,sameNoteMax=2;
 
     private void Start()
     {
@@ -79,7 +90,14 @@ public class Oscillator : MonoBehaviour
         currNote = notes[Random.Range(0,notes.Count)];
         oldNote = new Note(currNote);
 
+        bassNote = bass[Random.Range(0, bass.Count)];
+        bassDirection = Random.value > 0.5 ? 1 : -1;
+        currBaseIndex = Random.value > 0.5 ? 0 : bass.Count-1;
+
         randomValue = Random.value;
+
+        sameNoteMax = Random.Range(2, 4);
+        Debug.Log("sameNoteMax: "+sameNoteMax);
     }
 
     private void Update()
@@ -109,19 +127,30 @@ public class Oscillator : MonoBehaviour
         {
             currNote = GetNewNote(oldNote);
             oldNote = new Note(currNote);
-            Debug.Log("Current Note: "+currNote.Name+"\n"+seed);
+            
+            currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
+            bassNote = bass[Math.Abs(currBaseIndex)];
+            
+            Debug.Log("Note: "+currNote.Name+" | Bass: "+bassNote.Name+"\n"+seed);
             changeNote = false;
         }
 
         increment = ( currNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
+        var bassInc = (bassNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
         
         for (int i = 0; i < data.Length; i += channels)
         {
             phase += increment;
-            data[i] = (float)(currentGain * (Mathf.Sin((float)phase) /* + new wave */));
+            bassPhase += bassInc;
 
-            var flipper = data[i] >= 0 ? 1 : -1;
-            data[i] = (flipper * (float)currentGain) * 0.6f;
+            var mainSin = Mathf.Sin((float)phase);
+            var bassSin = Mathf.Sin((float)bassPhase);
+
+            data[i] = (float)(currentGain * (mainSin+0.5*bassSin) /*+ (currentGain*0.9f) * Mathf.Sin((float)bassPhase) /* + new wave */);
+
+            /*var flipper = data[i] >= 0 ? 1 : -1;
+            data[i] = (flipper * (float)currentGain) * 0.6f;*/
+            
 
             if (channels == 2)
             {
@@ -129,6 +158,7 @@ public class Oscillator : MonoBehaviour
             }
 
             phase %= (Mathf.PI * 2);
+            bassPhase %= (Mathf.PI * 2);
         }
     }
 
@@ -148,11 +178,23 @@ public class Oscillator : MonoBehaviour
                 // Replace with something more elegant later on.
                 if (newName == prevNote.Name)
                 {
-                    var num = Array.IndexOf(correspondingNote, prevNote.Name) + (int)(Math.Floor(bpm/50));
+                    sameNoteAmount++;
+                    /*var num = Array.IndexOf(correspondingNote, prevNote.Name) + (int)Math.Floor(randomValue*12);
+                    var altNote = FindInNotes(correspondingNote[num%correspondingNote.Length]);
+                    return altNote;*/
+                }
+                else
+                {
+                    sameNoteAmount = 0;
+                }
+
+                if (sameNoteAmount >= sameNoteMax)
+                {
+                    var num = Array.IndexOf(correspondingNote, prevNote.Name) + (int)Math.Floor(randomValue*12);
                     var altNote = FindInNotes(correspondingNote[num%correspondingNote.Length]);
                     return altNote;
                 }
-                
+
                 var returnNote = FindInNotes(newName);
                 return returnNote;
             }
