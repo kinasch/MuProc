@@ -8,9 +8,10 @@ public class RandomTest : MonoBehaviour
 {
     private static int seed = 420;
 
-    public static void SetSeed(String s)
+    public static void StopOrResume()
     {
-        seed = int.Parse(s);
+        Time.timeScale = Time.timeScale == 0 ? 1 : 0;
+        Debug.Log(Time.timeScale);
     }
     
     public static void LogRandomNumber()

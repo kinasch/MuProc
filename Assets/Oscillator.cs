@@ -13,16 +13,28 @@ public class Oscillator : MonoBehaviour
     private double phase,bassPhase;
     private const double samplingFrequency = 48000.0;
 
+    // Main seed which generates the seeds used to generate the notes.
     [SerializeField] private int musicSeed = 420;
     private int seed;
     private int[] innerSeeds;
 
+    // Volume. Keep low to prevent hearing damage!
     [SerializeField] private float gain;
     private float currentGain;
+    // Sets the beats per minute. Controls the speed.
     [Range(75,125)] public float bpm=100f;
+    // Amount of seeds that generate the notes internally, to reduce melodic repetition. Used inner seed changes every 8 notes.
     [SerializeField] private int amountOfInnerSeeds = 4;
-    
+    // Stops the music when true.
+    [SerializeField] private bool stopMusic;
+    public bool StopMusic
+    {
+        get => stopMusic;
+        set => stopMusic = value;
+    }
+
     private double time=0.0;
+    private double startTime = 0.0;
     private double duration = 0;
     private Note oldNote, currNote;
     private float randomValue;
@@ -98,12 +110,16 @@ public class Oscillator : MonoBehaviour
 
         sameNoteMax = Random.Range(2, 4);
         Debug.Log("sameNoteMax: "+sameNoteMax);
+
+        startTime = Time.realtimeSinceStartup;
     }
 
     private void Update()
     {
-        // Stops working once Time.timeScale = 0 -> Fix?
-        time += Time.deltaTime;
+        // Uses realtime instead of deltaTime to work in during every timeScale.
+        // This does prevent the music from slowing down using timeScale.
+        time += Time.realtimeSinceStartup - startTime;
+        // Decrease volume with time, mimicking a piano after the key has been released.
         currentGain = Mathf.Lerp(gain, 0, (float)time);
         if (time >= duration)
         {
@@ -114,15 +130,20 @@ public class Oscillator : MonoBehaviour
             repetitionCounter++;
         }
         
+        // Decrease repetition on the same seed (except when innerSeed is 1).
+        // Change the innerSeed after one innerSeed has been used for generating 8 notes.
         if (repetitionCounter > 8)
         {
             repetitionCounter %= 8;
             ChangeInnerSeed();
         }
+        startTime = Time.realtimeSinceStartup;
     }
 
     private void OnAudioFilterRead(float[] data, int channels)
     {
+        if (stopMusic) return;
+        
         if (changeNote)
         {
             currNote = GetNewNote(oldNote);
@@ -131,6 +152,7 @@ public class Oscillator : MonoBehaviour
             currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
             bassNote = bass[Math.Abs(currBaseIndex)];
             
+            // Useful logging, should be deleted in release.
             Debug.Log("Note: "+currNote.Name+" | Bass: "+bassNote.Name+"\n"+seed);
             changeNote = false;
         }
@@ -146,7 +168,7 @@ public class Oscillator : MonoBehaviour
             var mainSin = Mathf.Sin((float)phase);
             var bassSin = Mathf.Sin((float)bassPhase);
 
-            data[i] = (float)(currentGain * (mainSin+0.5*bassSin) /*+ (currentGain*0.9f) * Mathf.Sin((float)bassPhase) /* + new wave */);
+            data[i] = (float)(currentGain * (mainSin+0.5*bassSin));
 
             /*var flipper = data[i] >= 0 ? 1 : -1;
             data[i] = (flipper * (float)currentGain) * 0.6f;*/
@@ -174,19 +196,8 @@ public class Oscillator : MonoBehaviour
             {
                 var newName = correspondingNote[i];
 
-                // Prevent same note repetition.
-                // Replace with something more elegant later on.
-                if (newName == prevNote.Name)
-                {
-                    sameNoteAmount++;
-                    /*var num = Array.IndexOf(correspondingNote, prevNote.Name) + (int)Math.Floor(randomValue*12);
-                    var altNote = FindInNotes(correspondingNote[num%correspondingNote.Length]);
-                    return altNote;*/
-                }
-                else
-                {
-                    sameNoteAmount = 0;
-                }
+                // Prevent repeating the same note more than a randomly set amount of times.
+                sameNoteAmount = newName == prevNote.Name ? sameNoteAmount + 1 : 0;
 
                 if (sameNoteAmount >= sameNoteMax)
                 {
@@ -201,11 +212,7 @@ public class Oscillator : MonoBehaviour
         }
         return null;
     }
-
-    /// <summary>
-    /// That's resource hungry.
-    /// Change!
-    /// </summary>
+    
     private double[] SumEveryDoubleArrayValueWithItsPreviousValues(double[] array)
     {
         var newArray = new double[array.Length];
@@ -257,6 +264,9 @@ public class Oscillator : MonoBehaviour
     private int[] CreateSeedList(int initialSeed, int max)
     {
         Random.InitState(initialSeed);
+
+        // Prevent to few or too much innerSeeds
+        amountOfInnerSeeds = Math.Clamp(amountOfInnerSeeds, 1, 9999);
         
         int[] newSeeds = new int[amountOfInnerSeeds];
         for (int i = 0; i < amountOfInnerSeeds; i++)
