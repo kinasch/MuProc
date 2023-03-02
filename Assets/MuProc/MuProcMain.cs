@@ -181,9 +181,6 @@ namespace MuProc
                     currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
                 }
                 bassNote = bass[currBaseIndex];
-            
-                // Useful logging, should be deleted in release.
-                Debug.Log("Note: "+currNote.Name+" | Bass: "+bassNote.Name+"\n"+seed);
                 changeNote = false;
             }
 
