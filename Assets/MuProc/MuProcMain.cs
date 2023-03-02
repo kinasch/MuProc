@@ -17,7 +17,7 @@ namespace MuProc
         private int[] innerSeeds;
 
         // Volume. Keep low to prevent hearing damage!
-        private float gain;
+        private float gain = 0.02f;
         private float currentGain;
         // Sets the beats per minute. Controls the speed.
         private float bpm=100f;
@@ -31,7 +31,7 @@ namespace MuProc
         private float randomValue;
         private bool changeNote = false;
 
-        private readonly Dictionary<string, double[]> chances = new Dictionary<string, double[]>()
+        private Dictionary<string, double[]> chances = new Dictionary<string, double[]>()
         {
             {"C#",new double[]{0.055,0.0519,0.0744,0.0706,0.2895,0.0641,0.0631,0.0765,0.0374,0.1063,0.0165,0.0947}},
             { "G#",new double[]{0.0441, 0.07, 0.0729, 0.0904, 0.0602, 0.0384, 0.0677, 0.0503, 0.0397, 0.1072, 0.0436, 0.3156} },
@@ -46,6 +46,7 @@ namespace MuProc
             { "F",new double[]{0.0582, 0.0776, 0.0271, 0.1204, 0.0259, 0.0775, 0.0587, 0.073, 0.2864, 0.0471, 0.0959, 0.0522} },
             { "A#",new double[]{0.0585, 0.2688, 0.0621, 0.1114, 0.0407, 0.0718, 0.0614, 0.0323, 0.077, 0.0891, 0.0603, 0.0666} }
         };
+        private Dictionary<string, double[]> summedChances;
 
         private readonly List<Note> notes = new List<Note>()
         {
@@ -66,8 +67,9 @@ namespace MuProc
         private readonly List<Note> bass = new List<Note>()
         {
             new("C2", 65.41),
-            new( "E2", 82.41),
-            new( "G2", 98.00)
+            new( "D2", 73.42),
+            new( "F#2", 92.50),
+            new( "G#2", 103.83)
         };
         private int bassDirection = 1;
         private int currBaseIndex = 0;
@@ -77,9 +79,63 @@ namespace MuProc
         private int currentSeedNumber = 0;
         private int sameNoteAmount = 0,sameNoteMax=2;
 
+        private bool randomizeRepetitions = false;
+        private int maxValueForRepetitionsWhenRandomized = 4;
+        private int maxRepetitions = 4;
+
         private void OnEnable()
         {
+            summedChances = new Dictionary<string, double[]>();
+            foreach (var chance in chances)
+            {
+                summedChances.Add(
+                    chance.Key,
+                    SumEveryDoubleArrayValueWithItsPreviousValues(chance.Value)
+                );
+            }
+            
             ResetValues();
+        }
+        
+        private void ResetValues()
+        {
+            Random.InitState(musicSeed);
+            innerSeeds = CreateSeedList(musicSeed, 10000);
+
+            currentSeedNumber = 0;
+            seed = innerSeeds[currentSeedNumber];
+        
+            Random.InitState(seed);
+
+            duration = Random.Range(0.125f,0.25f);
+            currentGain = gain;
+        
+            currNote = notes[Random.Range(0,notes.Count)];
+            oldNote = new Note(currNote);
+
+            bassNote = bass[Random.Range(0, bass.Count)];
+            bassDirection = Random.value > 0.5 ? 1 : -1;
+            currBaseIndex = Random.value > 0.5 ? 0 : bass.Count-1;
+
+            ResetRepetitionValues();
+
+            randomValue = Random.value;
+
+            startTime = Time.realtimeSinceStartup;
+            repetitionCounter = 0;
+        }
+        private void ResetRepetitionValues()
+        {
+            Random.InitState(seed);
+            
+            if (randomizeRepetitions)
+            {
+                sameNoteMax = Random.Range(1, maxValueForRepetitionsWhenRandomized+1);
+            }
+            else
+            {
+                sameNoteMax = maxRepetitions;
+            }
         }
 
         private void Update()
@@ -113,9 +169,18 @@ namespace MuProc
             {
                 currNote = GetNewNote(oldNote);
                 oldNote = new Note(currNote);
-            
-                currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
-                bassNote = bass[Math.Abs(currBaseIndex)];
+
+                if (bassDirection == -1)
+                {
+                    // Ascending bass
+                    currBaseIndex += bassDirection;
+                    currBaseIndex = currBaseIndex < 0 ? bass.Count-1 : currBaseIndex;
+                }
+                else
+                {
+                    currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
+                }
+                bassNote = bass[currBaseIndex];
             
                 // Useful logging, should be deleted in release.
                 Debug.Log("Note: "+currNote.Name+" | Bass: "+bassNote.Name+"\n"+seed);
@@ -151,7 +216,7 @@ namespace MuProc
 
         private Note GetNewNote(Note prevNote)
         {
-            double[] notePercentages = SumEveryDoubleArrayValueWithItsPreviousValues(chances[prevNote.Name]);
+            double[] notePercentages = summedChances[prevNote.Name];
             // Sorted alphabetically (for whatever reason)
             string[] correspondingNote = {"A", "A#","B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
             float tempRdmValue = repetitionCounter % 2 == 0 ? randomValue : 1 - randomValue;
@@ -229,38 +294,10 @@ namespace MuProc
             return newSeeds;
         }
 
-        private void ResetValues()
-        {
-            Random.InitState(musicSeed);
-            innerSeeds = CreateSeedList(musicSeed, 10000);
-
-            currentSeedNumber = 0;
-            seed = innerSeeds[currentSeedNumber];
-        
-            Random.InitState(seed);
-
-            duration = Random.Range(0.125f,0.25f);
-            currentGain = gain;
-        
-            currNote = notes[Random.Range(0,notes.Count)];
-            oldNote = new Note(currNote);
-
-            bassNote = bass[Random.Range(0, bass.Count)];
-            bassDirection = Random.value > 0.5 ? 1 : -1;
-            currBaseIndex = Random.value > 0.5 ? 0 : bass.Count-1;
-
-            randomValue = Random.value;
-
-            sameNoteMax = Random.Range(2, 4);
-
-            startTime = Time.realtimeSinceStartup;
-            repetitionCounter = 0;
-        }
-        
-        
         // Internal Set Methods
         internal void SetSeed(int inputSeed)
         {
+            if (inputSeed == this.musicSeed) return;
             musicSeed = inputSeed;
             ResetValues();
         }
@@ -275,8 +312,32 @@ namespace MuProc
         }
         internal void SetAmountOfInnerSeeds(int amount)
         {
+            if (amount == this.amountOfInnerSeeds) return;
             this.amountOfInnerSeeds = amount;
             SetSeed(musicSeed);
+        }
+        internal void SetNoteChances(Dictionary<string, double[]> noteChances)
+        {
+            // This will not catch Dictionary with the same values (e.g. changing C#'s position).
+            if (this.chances.Equals(noteChances)) return;
+            if (noteChances == null) return;
+            this.chances = noteChances;
+            ResetValues();
+        }
+        internal void SetRandomizeRepetitions(bool randomReps)
+        {
+            this.randomizeRepetitions = randomReps;
+            ResetRepetitionValues();
+        }
+        internal void SetMaxRepetitions(int maxRep)
+        {
+            this.maxRepetitions = maxRep;
+            if(!randomizeRepetitions) ResetRepetitionValues();
+        }
+        internal void SetMaxValueForRepetitionsWhenRandomized(int randomMaxRep)
+        {
+            this.maxValueForRepetitionsWhenRandomized = randomMaxRep;
+            if(randomizeRepetitions) ResetRepetitionValues();
         }
         
     }

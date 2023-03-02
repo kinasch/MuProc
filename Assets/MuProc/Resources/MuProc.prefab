@@ -50,6 +50,7 @@ MonoBehaviour:
   gain: 0
   bpm: 100
   amountOfInnerSeeds: 4
+  noteChances: {fileID: 4900000, guid: 3e7b7dce7c18cdf4d85940ef1793af65, type: 3}
 --- !u!114 &165774122666719443
 MonoBehaviour:
   m_ObjectHideFlags: 0
