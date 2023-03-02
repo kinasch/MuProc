@@ -120,6 +120,15 @@ public class MuProcInterface : MonoBehaviour
             main.SetNoteChances(chances);
         }
     }
+    public bool GetMusicPlaying()
+    {
+        return main.enabled;
+    }
+
+    public string GetDebugValues()
+    {
+        return main.GetDebugValues();
+    }
     
     
 
@@ -144,28 +153,21 @@ public class MuProcInterface : MonoBehaviour
         if (chances == null) return;
         main.SetNoteChances(chances);
     }
-
-    [ContextMenu("Stop Music")]
+    
+    
     public void StopMusic()
     {
         main.enabled = false;
     }
-    [ContextMenu("Start or Restart Music")]
     public void StartMusic()
     {
         Gain = gain;
         main.enabled = true;
     }
-
-    public void SetSeedFromString(string input)
-    {
-        if (input == null) return;
-        if (int.TryParse(input, out var seed))
-        {
-            MusicSeed = seed;
-        }
-    }
     
+    
+
+#if UNITY_EDITOR
     [MenuItem("GameObject/MuProc/MuProc Instance", false, 10)]
     static void CreateMuProcInstance(MenuCommand menuCommand)
     {
@@ -178,4 +180,5 @@ public class MuProcInterface : MonoBehaviour
         Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
         Selection.activeObject = go;
     }
+#endif
 }

@@ -79,7 +79,7 @@ namespace MuProc
         private int currentSeedNumber = 0;
         private int sameNoteAmount = 0,sameNoteMax=2;
 
-        private bool randomizeRepetitions = false;
+        private bool randomizeRepetitions = true;
         private int maxValueForRepetitionsWhenRandomized = 4;
         private int maxRepetitions = 4;
 
@@ -294,7 +294,6 @@ namespace MuProc
         // Internal Set Methods
         internal void SetSeed(int inputSeed)
         {
-            if (inputSeed == this.musicSeed) return;
             musicSeed = inputSeed;
             ResetValues();
         }
@@ -335,6 +334,17 @@ namespace MuProc
         {
             this.maxValueForRepetitionsWhenRandomized = randomMaxRep;
             if(randomizeRepetitions) ResetRepetitionValues();
+        }
+
+        internal string GetDebugValues()
+        {
+            return "MusicSeed: " + musicSeed + "\n"
+                   + "Volume: " + gain + "\n"
+                   + "BPM: " + bpm + "\n"
+                   + "AmountOfInnerSeeds: " + amountOfInnerSeeds + "\n"
+                   + "randomRep? " + randomizeRepetitions + "\n"
+                   + "randomRep_Max: " + maxValueForRepetitionsWhenRandomized + "\n"
+                   + "rep_Max: " + maxRepetitions + "\n";
         }
         
     }
