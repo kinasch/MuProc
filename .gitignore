@@ -154,3 +154,7 @@ sysinfo.txt
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # End of https://www.toptal.com/developers/gitignore/api/unity,rider
+# data_acquisition only
+/data_acquisition/private.json
+/data_acquisition/node_modules/
+/data_acquisition/dls/
