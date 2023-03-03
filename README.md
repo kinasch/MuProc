@@ -1,9 +1,13 @@
 ﻿# MuProc
 Procedural Music Generation Tool for [Unity](https://unity.com/).
 
+---
+
 ## Requirements
 
 * At least Unity 2018.4
+
+---
 
 ## Usage
 
@@ -17,6 +21,8 @@ Procedural Music Generation Tool for [Unity](https://unity.com/).
 ![Feature Overview in Unity Inspector](/readme_resources/feature_overview.png)
 <br></br>
 #### 4. Start the music by enabling the MuProcMain Script on the Instance or via the Start method in the interface.
+
+---
 
 # Resources
 
