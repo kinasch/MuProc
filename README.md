@@ -1,6 +1,8 @@
 ﻿# MuProc
-Procedural Music Generation Tool for [Unity](https://unity.com/).
-More on the data analysis and acquisition [here](https://github.com/kinasch/MuProc/tree/main/data_acquisition).
+Procedural Music Generation Tool for [Unity](https://unity.com/) based on NES music.
+More on the data analysis and acquisition for this project [here](https://github.com/kinasch/MuProc/tree/main/data_acquisition).
+
+**[Check out the latest release!](https://github.com/kinasch/MuProc/releases)**
 
 ---
 
@@ -12,7 +14,7 @@ More on the data analysis and acquisition [here](https://github.com/kinasch/MuPr
 
 ## Usage
 
-#### 1. Import the package through Unity's Package Manager.
+#### 1. Download and import the package through Unity's Package Manager.
 ![Navigate to Windows/Package Manager in Unity to find the Unity Package Manager](/readme_resources/upm.png)
 <br></br>
 #### 2. Create a MuProc Instance in your Scene, just like any other GameObject, by right-clicking in the hierarchy.
