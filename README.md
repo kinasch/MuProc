@@ -1,5 +1,6 @@
 ﻿# MuProc
 Procedural Music Generation Tool for [Unity](https://unity.com/).
+More on the data analysis and acquisition [here](https://github.com/kinasch/MuProc/tree/main/data_acquisition).
 
 ---
 
