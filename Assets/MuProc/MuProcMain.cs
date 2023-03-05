@@ -7,7 +7,6 @@ namespace MuProc
 {
     public class MuProcMain : MonoBehaviour
     {
-        private double increment;
         private double phase,bassPhase;
         private const double samplingFrequency = 48000.0;
 
@@ -76,6 +75,7 @@ namespace MuProc
         private Note bassNote;
 
         private int repetitionCounter = 0;
+        private int repetitionCounterLimit = 8;
         private int currentSeedNumber = 0;
         private int sameNoteAmount = 0,sameNoteMax=2;
 
@@ -83,8 +83,11 @@ namespace MuProc
         private int maxValueForRepetitionsWhenRandomized = 4;
         private int maxRepetitions = 4;
 
+        private bool haltGeneration = false;
+
         private void OnEnable()
         {
+            haltGeneration = false;
             summedChances = new Dictionary<string, double[]>();
             foreach (var chance in chances)
             {
@@ -100,7 +103,7 @@ namespace MuProc
         private void ResetValues()
         {
             Random.InitState(musicSeed);
-            innerSeeds = CreateSeedList(musicSeed, 10000);
+            innerSeeds = amountOfInnerSeeds == 1 ? new []{ musicSeed } : CreateSeedList(musicSeed, 10000);
 
             currentSeedNumber = 0;
             seed = innerSeeds[currentSeedNumber];
@@ -140,53 +143,66 @@ namespace MuProc
 
         private void Update()
         {
-            // Uses realtime instead of deltaTime to work in during every timeScale.
-            // This does prevent the music from slowing down using timeScale.
-            time += Time.realtimeSinceStartup - startTime;
-            // Decrease volume with time, mimicking a piano after the key has been released.
-            currentGain = Mathf.Lerp(gain, 0, (float)time);
-            if (time >= (duration* 4 * (60 / bpm)))
+            if (!haltGeneration)
             {
-                changeNote = true;
-                currentGain = gain;
-                time = 0.0;
-                repetitionCounter++;
-            }
-        
-            // Decrease repetition on the same seed (except when innerSeed is 1).
-            // Change the innerSeed after one innerSeed has been used for generating 8 notes.
-            if (repetitionCounter > 8)
-            {
-                repetitionCounter %= 8;
-                ChangeInnerSeed();
+                // Uses realtime instead of deltaTime to work in during every timeScale.
+                // This does prevent the music from slowing down using timeScale.
+                time += Time.realtimeSinceStartup - startTime;
+                // Decrease volume with time, mimicking a piano after the key has been released.
+                currentGain = Mathf.Lerp(gain, 0, (float)time);
+                if (time >= (duration * 4 * (60 / bpm)))
+                {
+                    changeNote = true;
+                    currentGain = gain;
+                    time = 0.0;
+                    repetitionCounter++;
+                }
+
+                // Decrease repetition on the same seed (except when innerSeed is 1).
+                // Change the innerSeed after one innerSeed has been used for generating 8 notes.
+                if (repetitionCounter > repetitionCounterLimit)
+                {
+                    repetitionCounter %= repetitionCounterLimit;
+                    ChangeInnerSeed();
+                }
             }
             startTime = Time.realtimeSinceStartup;
         }
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            if (changeNote)
+            double bassInc = 0, increment = 0;
+            
+            if (!haltGeneration)
             {
-                currNote = GetNewNote(oldNote);
-                oldNote = new Note(currNote);
+                if (changeNote)
+                {
+                    currNote = GetNewNote(oldNote);
+                    oldNote = new Note(currNote);
 
-                if (bassDirection == -1)
-                {
-                    // Ascending bass
-                    currBaseIndex += bassDirection;
-                    currBaseIndex = currBaseIndex < 0 ? bass.Count-1 : currBaseIndex;
+                    if (bassDirection == -1)
+                    {
+                        // Ascending bass
+                        currBaseIndex += bassDirection;
+                        currBaseIndex = currBaseIndex < 0 ? bass.Count - 1 : currBaseIndex;
+                    }
+                    else
+                    {
+                        currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
+                    }
+
+                    bassNote = bass[currBaseIndex];
+                    changeNote = false;
                 }
-                else
-                {
-                    currBaseIndex = (currBaseIndex + bassDirection) % bass.Count;
-                }
-                bassNote = bass[currBaseIndex];
-                changeNote = false;
+
+                increment = (currNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
+                bassInc = (bassNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
+            }
+            else
+            {
+                currentGain = 0;
             }
 
-            increment = ( currNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
-            var bassInc = (bassNote.Frequency * 2.0 * Mathf.PI / samplingFrequency);
-        
             for (int i = 0; i < data.Length; i += channels)
             {
                 phase += increment;
@@ -196,10 +212,6 @@ namespace MuProc
                 var bassSin = Mathf.Sin((float)bassPhase);
 
                 data[i] = (float)(currentGain * (mainSin+0.5*bassSin));
-
-                /*var flipper = data[i] >= 0 ? 1 : -1;
-            data[i] = (flipper * (float)currentGain) * 0.6f;*/
-            
 
                 if (channels == 2)
                 {
@@ -335,12 +347,30 @@ namespace MuProc
             this.maxValueForRepetitionsWhenRandomized = randomMaxRep;
             if(randomizeRepetitions) ResetRepetitionValues();
         }
+        internal void SetRepetitionLimitPerInnerSeed(int repLimit)
+        {
+            this.repetitionCounterLimit = repLimit;
+        }
+        /// <summary>
+        /// True to restart the generation without resetting values, false to halt.
+        /// </summary>
+        internal void ChangeGenerationStatus(bool status)
+        {
+            this.haltGeneration = !status;
+            startTime = Time.realtimeSinceStartup;
+        }
+
+        internal bool GetIsMusicHalted()
+        {
+            return this.haltGeneration;
+        }
 
         internal string GetDebugValues()
         {
             return "MusicSeed: " + musicSeed + "\n"
                    + "Volume: " + gain + "\n"
                    + "BPM: " + bpm + "\n"
+                   + "NotesPerInnerSeed: " + repetitionCounterLimit + "\n"
                    + "AmountOfInnerSeeds: " + amountOfInnerSeeds + "\n"
                    + "randomRep? " + randomizeRepetitions + "\n"
                    + "randomRep_Max: " + maxValueForRepetitionsWhenRandomized + "\n"

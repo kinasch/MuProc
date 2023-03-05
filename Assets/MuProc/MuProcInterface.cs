@@ -27,7 +27,11 @@ public class MuProcInterface : MonoBehaviour
     
     [Header("Other Generation Control")]
     [Space (-5)]
-    [Header("Set the amount of inner seeds. Every 8 note, a new inner seed from the amount of inner seeds is chosen.")]
+    [Header("Set the amount of notes per inner seed. After this amount of notes have been generated, a different seed generates new notes.")]
+    // Amount of notes per inner seed.
+    [SerializeField,Range(1,32)] private int notesPerInnerSeed = 8;
+    [Space (-5)]
+    [Header("Set the amount of inner seeds. Every few notes, a new inner seed from the amount of inner seeds is chosen. If 1, takes the main seed.")]
     // Amount of seeds that generate the notes internally, to reduce melodic repetition. Used inner seed changes every 8 notes.
     [SerializeField,Range(1,9999)] private int amountOfInnerSeeds = 4;
     [Space (-5)]
@@ -72,6 +76,14 @@ public class MuProcInterface : MonoBehaviour
         set {
             bpm = Mathf.Clamp(value,50,150);
             main.SetBpm(bpm);
+        }
+    }
+    public int NotesPerInnerSeed
+    {
+        get => notesPerInnerSeed;
+        set {
+            notesPerInnerSeed = Math.Clamp(value,1,32);
+            main.SetRepetitionLimitPerInnerSeed(notesPerInnerSeed);
         }
     }
     public int AmountOfInnerSeeds
@@ -124,6 +136,10 @@ public class MuProcInterface : MonoBehaviour
     {
         return main.enabled;
     }
+    public bool GetIsGenerationHalted()
+    {
+        return main.GetIsMusicHalted();
+    }
 
     public string GetDebugValues()
     {
@@ -138,6 +154,7 @@ public class MuProcInterface : MonoBehaviour
         MusicSeed = musicSeed;
         Gain = gain;
         Bpm = bpm;
+        NotesPerInnerSeed = notesPerInnerSeed;
         AmountOfInnerSeeds = amountOfInnerSeeds;
         RandomizeRepetitions = randomizeRepetitions;
         MaxValueForRandomizedRepetitions = maxValueForRandomizedRepetitions;
@@ -163,6 +180,18 @@ public class MuProcInterface : MonoBehaviour
     {
         Gain = gain;
         main.enabled = true;
+        main.ChangeGenerationStatus(true);
+    }
+
+    public void HaltGeneration()
+    {
+        if (!GetMusicPlaying()) return;
+        main.ChangeGenerationStatus(false);
+    }
+    public void ResumeGeneration()
+    {
+        if (!GetMusicPlaying()) return;
+        main.ChangeGenerationStatus(true);
     }
     
     

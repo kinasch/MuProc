@@ -19,19 +19,27 @@ public class Controller : MonoBehaviour
         SetDisplayValues();
     }
 
-    // Start or resume music
-    public void StartOrStopMusic()
+    // Restart music
+    public void RestartMusic()
     {
-        bool playing = muProcInterface.GetMusicPlaying();
-        if (playing)
-        {
-            muProcInterface.StopMusic();
-        }
-        else
-        {
-            muProcInterface.StartMusic();
-        }
+        muProcInterface.StartMusic();
     }
+    // Stop music
+    public void StopMusic()
+    {
+        muProcInterface.StopMusic();
+    }
+    // Resume music generation
+    public void ResumeGeneration()
+    {
+        muProcInterface.ResumeGeneration();
+    }
+    // Halt music generation
+    public void HaltGeneration()
+    {
+        muProcInterface.HaltGeneration();
+    }
+    
     
     // Control the values with TextAreas, Sliders or Toggles
     public void SetSeedFromString(string inputSeed)
@@ -48,6 +56,11 @@ public class Controller : MonoBehaviour
     public void SetBpmFromSlider(float bpm)
     {
         muProcInterface.Bpm = bpm;
+        SetDisplayValues();
+    }
+    public void SetNotesPerInnerSeedFromSlider(float amount)
+    {
+        muProcInterface.NotesPerInnerSeed = (int)amount;
         SetDisplayValues();
     }
     public void SetAmountOfInnerSeedsFromSlider(float amount)
