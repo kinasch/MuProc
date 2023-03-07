@@ -9,7 +9,9 @@ const privateData = require("./private.json");
     
     const context = await browser.newContext({ acceptDownloads: true });
     const page = await context.newPage();
-    await page.goto('http://vgmusic.com/music/console/nintendo/nes/');
+    // Change this url to the archive of a specific console
+    // The VGMusic archive says to link directly to their main page, thus this url leads to this page.
+    await page.goto('http://www.vgmusic.com/');
     await page.waitForLoadState('networkidle');
 
     const locator = await page.locator('a[href$=".mid"]');

@@ -22,25 +22,25 @@ files.forEach(file => {
             const notes = track.notes;
 
             for (let i = 0; i < notes.length; i++) {
-                if(i+1 >= notes.length){
-                    break;
-                }
                 let currName = notes[i].name;
-                if(currName.includes('-')) continue;
-                // Only the major (non-musical meaning) notes
-                currName = currName.slice(0,currName.length-1);
+                
+                if(currName.includes("4")){
+                    if(typeof (amountOfNotes[currName]) === "undefined"){
+                        amountOfNotes[currName] = 0;
+                    }
+                    amountOfNotes[currName] += 1;
+                }
+
+                if(i+1 >= notes.length) break;
+
+                currName = currName.slice(0,currName.length-1).replace("-","");
+
                 if(typeof (notesAndNeighbours[currName]) === "undefined"){
                     notesAndNeighbours[currName] = new Array();
                 }
+                var nextNoteName = notes[i+1].name;
                 // Note down the neighbour of the current note
-                if(!notes[i+1].name.includes('-')){
-                    notesAndNeighbours[currName].push(notes[i+1].name.slice(0,notes[i+1].name.length-1));
-                }
-
-                if(typeof (amountOfNotes[currName]) === "undefined"){
-                    amountOfNotes[currName] = 0;
-                }
-                amountOfNotes[currName] += 1;
+                notesAndNeighbours[currName].push(nextNoteName.slice(0,nextNoteName.length-1).replace("-",""));
             }
         });
         fileNumber++;
@@ -50,19 +50,19 @@ files.forEach(file => {
     }
 });
 
-let prevelanceData = {};
+let chanceArray = {};
 try {
     for (const [key, value] of Object.entries(notesAndNeighbours)) {
-        prevelanceData[key] = prevelanceArray(key);
+        chanceArray[key] = returnChanceArray(key);
         console.log(key+": ");
-        console.log(prevelanceData[key]);
+        console.log(chanceArray[key]);
         console.log("#############################");
     }
 } catch (error) {
     console.warn(error);
 }
 
-function prevelanceArray(name){
+function returnChanceArray(name){
     let currNoteArr = notesAndNeighbours[name];
     // Notes and their corresponding place in the prevArr
     let correspondingNote = ["A", "A#","B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
@@ -82,7 +82,7 @@ function prevelanceArray(name){
 }
 
 // convert JSON object to a string
-const data = JSON.stringify(prevelanceData);
+const data = JSON.stringify(chanceArray);
 
 // write JSON string to a file
 fs.writeFileSync('result.json', data, err => {
