@@ -3,6 +3,7 @@ const fs = require('fs');
 
 let notesAndNeighbours = {};
 let amountOfNotes = {};
+let amountOfBass = {};
 
 // Technically I should use private.json here as well. Technically.
 let files = fs.readdirSync("./dls/");
@@ -17,18 +18,28 @@ files.forEach(file => {
         const midi = new Midi(midiData);
         //the file name decoded from the first track
         console.log(midi.name);
+
         //get the tracks
         midi.tracks.forEach(track => {
             const notes = track.notes;
 
             for (let i = 0; i < notes.length; i++) {
                 let currName = notes[i].name;
-                
+
+                // Track the amount of every type of notation.
+                // This disregards notations with a minus.
+                let number = currName.substring(currName.length-1)
+                if(typeof (amountOfNotes[number]) === "undefined"){
+                    amountOfNotes[number] = 0;
+                }
+                amountOfNotes[number] += 1;
+
+                // Also track the amount of individual bass notes.
                 if(currName.includes("2")){
-                    if(typeof (amountOfNotes[currName]) === "undefined"){
-                        amountOfNotes[currName] = 0;
+                    if(typeof (amountOfBass[currName]) === "undefined"){
+                        amountOfBass[currName] = 0;
                     }
-                    amountOfNotes[currName] += 1;
+                    amountOfBass[currName] += 1;
                 }
 
                 if(i+1 >= notes.length) break;
