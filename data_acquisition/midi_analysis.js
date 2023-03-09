@@ -24,7 +24,7 @@ files.forEach(file => {
             for (let i = 0; i < notes.length; i++) {
                 let currName = notes[i].name;
                 
-                if(currName.includes("4")){
+                if(currName.includes("2")){
                     if(typeof (amountOfNotes[currName]) === "undefined"){
                         amountOfNotes[currName] = 0;
                     }
