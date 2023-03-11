@@ -5,7 +5,6 @@ let notesAndNeighbours = {};
 let amountOfNotes = {};
 let amountOfBass = {};
 
-// Technically I should use private.json here as well. Technically.
 let files = fs.readdirSync("./dls/");
 console.log(files);
 let fileNumber = 0;
