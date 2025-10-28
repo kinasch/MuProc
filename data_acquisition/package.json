@@ -11,6 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
-    "playwright": "^1.30.0"
+    "playwright": "^1.55.1"
   }
 }
